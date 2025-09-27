@@ -1,12 +1,19 @@
-// Ensure the types are defined in the SmartFlow module
-public struct WaterUsageModel {
-    // Define properties and methods for WaterUsageModel here
-}
+//
+//  WaterUsageModel.swift
+//  SmartFlow
+//
+//  Created by Raudel Alejandro on 14-08-2025.
+//
 
-public struct LimitPeriod {
-    // Define properties and methods for LimitPeriod here
-}
+import Foundation
+import SwiftUI
+import Combine
+import SmartFlow
 
-public struct WaterUnit {
-    // Define properties and methods for WaterUnit here
-}
+// Re-export types from the SmartFlow module
+public typealias WaterUsageModel = SmartFlow.WaterUsageModel
+public typealias LimitPeriod = SmartFlow.LimitPeriod
+public typealias WaterUnit = SmartFlow.WaterUnit
+
+// The original implementation has been moved to the SmartFlow framework
+// This file now just re-exports those types to maintain compatibility

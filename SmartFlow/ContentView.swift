@@ -8,14 +8,43 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var waterModel: WaterUsageModel
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            NavigationView {
+                HomeView()
+            }
+            .tabItem {
+                Label("Home", systemImage: "drop.fill")
+            }
+            
+            SetLimitView()
+                .tabItem {
+                    Label("Set Limit", systemImage: "gauge.badge.plus")
+                }
+            
+            NavigationView {
+                HistoryView()
+            }
+            .tabItem {
+                Label("History", systemImage: "chart.line.uptrend.xyaxis")
+            }
+            
+            // Conditionally show Log tab when enabled
+            if waterModel.logViewEnabled {
+                LogView()
+                    .tabItem {
+                        Label("Log", systemImage: "terminal.fill")
+                    }
+            }
+            
+            SettingsView()
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
         }
-        .padding()
+        .accentColor(.blue)
     }
 }
 

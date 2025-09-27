@@ -1,0 +1,138 @@
+//
+//  HistoryView.swift
+//  SmartFlow Watch App
+//
+//  Created by Raudel Alejandro on 14-08-2025.
+//
+
+import SwiftUI
+
+struct HistoryView: View {
+    @EnvironmentObject var waterModel: WatchWaterUsageModel
+    @StateObject private var connectivityManager = WatchConnectivityManager.shared
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                // Weekly Summary
+                VStack(spacing: 4) {
+                    Text("Weekly Summary")
+                        .font(.headline)
+                    
+                    HStack {
+                        VStack {
+                            Text("Total")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(String(format: "%.1f", waterModel.weeklyTotal))
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack {
+                            Text("Average")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(String(format: "%.1f", waterModel.dailyAverage))
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .padding()
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(10)
+                
+                // Daily History Chart
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Last 7 Days")
+                        .font(.headline)
+                    
+                    let maxValue = waterModel.dailyHistory.max() ?? 1
+                    let dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+                    
+                    HStack(alignment: .bottom, spacing: 4) {
+                        ForEach(Array(waterModel.dailyHistory.enumerated()), id: \.offset) { index, value in
+                            VStack(spacing: 2) {
+                                Rectangle()
+                                    .fill(Color.blue.opacity(0.7))
+                                    .frame(width: 16, height: max(4, CGFloat(value / maxValue) * 60))
+                                
+                                Text(dayLabels[index])
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .frame(height: 80)
+                    
+                    // Values below chart
+                    HStack(spacing: 4) {
+                        ForEach(Array(waterModel.dailyHistory.enumerated()), id: \.offset) { index, value in
+                            Text(String(format: "%.0f", value))
+                                .font(.caption2)
+                                .frame(width: 16)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(10)
+                
+                // Current Period Info
+                VStack(spacing: 4) {
+                    Text("Current \(waterModel.limitPeriodString.capitalized)")
+                        .font(.headline)
+                    
+                    Text("\(String(format: "%.1f", waterModel.currentUsage)) / \(Int(waterModel.usageLimit)) \(waterModel.unit)")
+                        .font(.title3)
+                        .foregroundColor(waterModel.usageColor)
+                }
+                .padding()
+                .background(waterModel.usageColor.opacity(0.1))
+                .cornerRadius(10)
+                
+                // Sync Status
+                VStack(spacing: 4) {
+                    Text("Sync Status")
+                        .font(.headline)
+                    
+                    Text(connectivityManager.isConnected ? "Connected" : "Disconnected")
+                        .font(.title3)
+                        .foregroundColor(connectivityManager.isConnected ? .green : .red)
+                    
+                    if let lastSync = connectivityManager.lastSyncTime {
+                        Text("Last Sync: \(lastSync, formatter: dateFormatter)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+                .background(connectivityManager.isConnected ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+                .cornerRadius(10)
+            }
+            .padding()
+        }
+        .navigationTitle("History")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            connectivityManager.requestDataFromPhone()
+        }
+    }
+}
+
+private let dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    return formatter
+}()
+
+#Preview {
+    HistoryView()
+        .environmentObject(WatchWaterUsageModel())
+}

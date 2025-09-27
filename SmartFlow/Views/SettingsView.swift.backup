@@ -1,0 +1,124 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @EnvironmentObject var waterModel: WaterUsageModel
+    
+    @State private var selectedUnit = "Liters"
+    @State private var notificationsEnabled = true
+    @State private var deviceStatus = "Not Connected"
+    
+    let unitOptions = ["Liters", "Gallons"]
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("PREFERENCES")) {
+                    // Unit selection
+                    Picker("Unit", selection: $selectedUnit) {
+                        ForEach(unitOptions, id: \.self) { unit in
+                            Text(unit)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: selectedUnit) { oldValue, newValue in
+                        // We can't set unit directly as it's a get-only property
+                        // Instead, toggle the useMetricSystem property
+                        waterModel.toggleMeasurementSystem()
+                        HapticFeedback.selection()
+                    }
+                    
+                    // Notification settings
+                    Toggle("Enable Notifications", isOn: $notificationsEnabled)
+                        .onChange(of: notificationsEnabled) { _, _ in
+                            HapticFeedback.light()
+                        }
+                    
+                    // Navigate to set limit view
+                    NavigationLink(destination: SetLimitView()) {
+                        HStack {
+                            Text("Water Usage Limit")
+                            Spacer()
+                            Text("\(Int(waterModel.usageLimit)) \(waterModel.unit) (\(waterModel.limitPeriod.rawValue))")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .simultaneousGesture(TapGesture().onEnded {
+                        HapticFeedback.medium()
+                    })
+                }
+                
+                Section(header: Text("DEVICE")) {
+                    // In a real app, this would handle actual device connections
+                    // For demo purposes, we simulate device status
+                    Button(action: {
+                        // Toggle connection status for demo
+                        deviceStatus = deviceStatus == "Connected" ? "Not Connected" : "Connected"
+                        
+                        // Provide appropriate haptic feedback based on connection status
+                        if deviceStatus == "Connected" {
+                            HapticFeedback.notification(type: .success)
+                        } else {
+                            HapticFeedback.notification(type: .warning)
+                        }
+                    }) {
+                        HStack {
+                            Text("Connect Flow Meter")
+                            Spacer()
+                            Text(deviceStatus)
+                                .foregroundColor(deviceStatus == "Connected" ? .green : .red)
+                        }
+                    }
+                    
+                    // Device info row
+                    HStack {
+                        Text("Device ID")
+                        Spacer()
+                        Text(deviceStatus == "Connected" ? "SF-4269-XYZ" : "—")
+                            .foregroundColor(.gray)
+                    }
+                    
+                    // Battery status row - only shown when connected
+                    if deviceStatus == "Connected" {
+                        HStack {
+                            Text("Battery Level")
+                            Spacer()
+                            Text("87%")
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                
+                Section(header: Text("ABOUT")) {
+                    // App info
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text("1.0.0 (MVP)")
+                            .foregroundColor(.gray)
+                    }
+                    
+                    // Help section
+                    Button(action: {
+                        // In a real app, this would open help documentation
+                        HapticFeedback.medium()
+                    }) {
+                        Text("Help & Support")
+                    }
+                    
+                    // Privacy policy
+                    Button(action: {
+                        // In a real app, this would open privacy policy
+                        HapticFeedback.medium()
+                    }) {
+                        Text("Privacy Policy")
+                    }
+                }
+            }
+            .navigationTitle("Settings")
+            .onAppear {
+                // Ensure settings are in sync with the model
+                selectedUnit = waterModel.unit
+            }
+        }
+    }
+}
