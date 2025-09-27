@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "5124D768-002F-45C3-9B07-530A7A5022E6",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:SmartFlow.xcodeproj",
+      "identifier" : "96A10B7D2E4ECDC1005D1DC3",
+      "name" : "SmartFlow"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:SmartFlow.xcodeproj",
+        "identifier" : "96A10B8A2E4ECDC3005D1DC3",
+        "name" : "SmartFlowTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:SmartFlow.xcodeproj",
+        "identifier" : "96A10B942E4ECDC3005D1DC3",
+        "name" : "SmartFlowUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
