@@ -96,24 +96,9 @@
 			path = SmartFlowTests;
 			sourceTree = "<group>";
 		};
-		96A10B982E4ECDC3005D1DC3 /* SmartFlowUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SmartFlowUITests;
-			sourceTree = "<group>";
-		};
 		96A10BC72E4EEB60005D1DC3 /* SmartFlowWatchApp Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "SmartFlowWatchApp Watch App";
-			sourceTree = "<group>";
-		};
-		96A10BD52E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SmartFlowWatchApp Watch AppTests";
-			sourceTree = "<group>";
-		};
-		96A10BDF2E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "SmartFlowWatchApp Watch AppUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -169,10 +154,7 @@
 			children = (
 				96A10B802E4ECDC1005D1DC3 /* SmartFlow */,
 				96A10B8E2E4ECDC3005D1DC3 /* SmartFlowTests */,
-				96A10B982E4ECDC3005D1DC3 /* SmartFlowUITests */,
 				96A10BC72E4EEB60005D1DC3 /* SmartFlowWatchApp Watch App */,
-				96A10BD52E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppTests */,
-				96A10BDF2E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppUITests */,
 				96A10B7F2E4ECDC1005D1DC3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -252,9 +234,6 @@
 			dependencies = (
 				96A10B972E4ECDC3005D1DC3 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				96A10B982E4ECDC3005D1DC3 /* SmartFlowUITests */,
-			);
 			name = SmartFlowUITests;
 			packageProductDependencies = (
 			);
@@ -316,9 +295,6 @@
 			dependencies = (
 				96A10BD42E4EEB61005D1DC3 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				96A10BD52E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppTests */,
-			);
 			name = "SmartFlowWatchApp Watch AppTests";
 			packageProductDependencies = (
 			);
@@ -338,9 +314,6 @@
 			);
 			dependencies = (
 				96A10BDE2E4EEB61005D1DC3 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				96A10BDF2E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppUITests */,
 			);
 			name = "SmartFlowWatchApp Watch AppUITests";
 			packageProductDependencies = (

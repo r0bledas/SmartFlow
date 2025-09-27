@@ -18,7 +18,7 @@ SmartFlow is a comprehensive iOS water usage monitoring application that integra
 - **Manual IP Connection**: Fallback option for problematic networks
 - **Real-time Data Polling**: Continuous monitoring with background task management
 - **Connection Status Monitoring**: Visual feedback and animated connection states
-- **Bluetooth Support**: BLE fallback communication
+- **(TO BE IMPLEMENTED):Bluetooth Support**: BLE fallback communication
 
 ### 🔔 Smart Notifications
 - **Threshold Alerts**: Customizable warnings (default 80% of daily limit)
@@ -78,7 +78,7 @@ open SmartFlow.xcodeproj
 ## Hardware Setup 🔧
 
 ### ESP32 Configuration
-1. Flash the included Arduino sketch: `ESP32_SmartFlow_BLE.ino`
+1. Flash the included Arduino sketch: `~/SmartFlow/SmartFlow/ESP32WaterFlowINOfile/ESP32WaterFlow.ino`
 2. Connect your water flow sensor to the designated GPIO pins
 3. Configure WiFi credentials in the Arduino code
 4. Power on the ESP32 and verify LED indicators
@@ -87,8 +87,6 @@ open SmartFlow.xcodeproj
 - Ensure ESP32 and iOS device are on the same WiFi network
 - Note the ESP32's IP address for manual connection if needed
 - Configure any necessary firewall rules for communication
-
-Detailed hardware setup instructions are available in `ESP32_Hardware_Setup.md`.
 
 ## Usage 📖
 
