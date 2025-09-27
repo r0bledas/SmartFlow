@@ -57,7 +57,7 @@ SmartFlow is a comprehensive iOS water usage monitoring application that integra
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/SmartFlow.git
+git clone https://github.com/r0bledas/SmartFlow.git
 cd SmartFlow
 ```
 
