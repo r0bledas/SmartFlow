@@ -22,15 +22,16 @@ struct SettingsView: View {
     @State private var connectionFailed = false
     @State private var testNotificationCountdown = 0
     @State private var testNotificationTimer: Timer?
+    @State private var showingDeviceSetup = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // Flow Sensor Section
-                Section("Flow Sensor") {
+                Section(L("Flow Sensor")) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Water Flow Sensor")
+                            Text(L("Water Flow Sensor"))
                                 .font(.headline)
                                 .fontWeight(.medium)
                             
@@ -38,14 +39,18 @@ struct SettingsView: View {
                                 Text("Connecting\(connectingDots)")
                                     .font(.subheadline)
                                     .foregroundColor(.orange)
+                            } else if waterModel.flowMeterConnected {
+                                Text(L("Connected"))
+                                    .font(.subheadline)
+                                    .foregroundColor(.green)
                             } else if connectionFailed {
-                                Text("Connection Failed")
+                                Text(L("Connection Failed"))
                                     .font(.subheadline)
                                     .foregroundColor(.red)
                             } else {
-                                Text(waterModel.flowMeterConnected ? "Connected" : "Disconnected")
+                                Text(L("Disconnected"))
                                     .font(.subheadline)
-                                    .foregroundColor(waterModel.flowMeterConnected ? .green : .red)
+                                    .foregroundColor(.red)
                             }
                         }
                         
@@ -61,7 +66,7 @@ struct SettingsView: View {
                                 startConnecting()
                             }
                         }) {
-                            Text(isConnecting ? "Connecting" : (waterModel.flowMeterConnected ? "Disconnect" : "Connect"))
+                            Text(isConnecting ? L("Connecting") : (waterModel.flowMeterConnected ? L("Disconnect") : L("Connect")))
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white)
                                 .frame(minWidth: 130, minHeight: 32)
@@ -77,7 +82,7 @@ struct SettingsView: View {
                     if connectionFailed || showingManualIP {
                         VStack(spacing: 12) {
                             HStack {
-                                Text("Manual Connection")
+                                Text(L("Manual Connection"))
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                 Spacer()
@@ -90,7 +95,7 @@ struct SettingsView: View {
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
                                 
-                                Button("Connect") {
+                                Button(L("Connect")) {
                                     connectToManualIP()
                                 }
                                 .font(.system(size: 12, weight: .medium))
@@ -103,7 +108,7 @@ struct SettingsView: View {
                             }
                             
                             if !showingManualIP {
-                                Button("Cancel Manual Setup") {
+                                Button(L("Cancel Manual Setup")) {
                                     connectionFailed = false
                                     manualIP = ""
                                 }
@@ -117,17 +122,36 @@ struct SettingsView: View {
                         .cornerRadius(8)
                     } else if !waterModel.flowMeterConnected && !isConnecting {
                         // Show manual IP toggle when disconnected
-                        Button("Enter IP Manually") {
+                        Button(L("Enter IP Manually")) {
                             showingManualIP = true
                         }
                         .font(.caption)
                         .foregroundColor(.blue)
                         .padding(.top, 4)
                     }
+                    
+                    // BLE Setup button — always visible when disconnected
+                    if !waterModel.flowMeterConnected {
+                        Button(action: {
+                            showingDeviceSetup = true
+                        }) {
+                            HStack {
+                                Image(systemName: "antenna.radiowaves.left.and.right")
+                                Text(L("Setup New Device"))
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 40)
+                            .background(Color.green)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.top, 4)
+                    }
                 }
                 
                 // Device Information Section
-                Section("Device Information") {
+                Section(L("Device Information")) {
                     if waterModel.flowMeterConnected {
                         VStack(spacing: 12) {
                             HStack {
@@ -203,7 +227,7 @@ struct SettingsView: View {
                 }
                 
                 // Daily Limit Section
-                Section("Daily Water Limit") {
+                Section(L("Daily Limit")) {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Current Limit")
@@ -232,7 +256,7 @@ struct SettingsView: View {
                 }
                 
                 // Unit Selection Section
-                Section("Units & Preferences") {
+                Section(L("Units & Display")) {
                     HStack {
                         Text("Measurement Unit")
                             .font(.headline)
@@ -251,13 +275,13 @@ struct SettingsView: View {
                 }
                 
                 // Notifications Section
-                Section("Notifications") {
+                Section(L("Notifications")) {
                     HStack {
                         Image(systemName: "bell.fill")
                             .foregroundColor(.purple)
                             .frame(width: 24)
                         
-                        Text("Usage Alerts")
+                        Text(L("Usage Alerts"))
                         
                         Spacer()
                         
@@ -316,42 +340,34 @@ struct SettingsView: View {
                 
                 // Developer Section
                 Section("Developer") {
-                    HStack {
-                        Image(systemName: "terminal.fill")
-                            .foregroundColor(.green)
-                            .frame(width: 24)
-                        
-                        Text("Enable Log View")
-                        
-                        Spacer()
-                        
-                        Toggle("", isOn: $waterModel.logViewEnabled)
-                            .labelsHidden()
-                    }
-                    
-                    if waterModel.logViewEnabled {
+                    NavigationLink(destination: LogView()) {
                         HStack {
-                            Image(systemName: "eye.fill")
+                            Image(systemName: "terminal.fill")
                                 .foregroundColor(.green)
                                 .frame(width: 24)
                             
-                            Text("Log tab visible - shows ESP32 raw output")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            
-                            Spacer()
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Debug Console")
+                                    .font(.headline)
+                                    .fontWeight(.medium)
+                                
+                                Text("View ESP32 connection logs")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
                 }
                 
                 // Apple Watch Section
-                Section("Apple Watch") {
+                Section(L("Apple Watch")) {
                     HStack {
                         Image(systemName: "applewatch")
                             .foregroundColor(.black)
                             .frame(width: 24)
                         
-                        Text("Sync with Apple Watch")
+                        Text(L("Sync with Apple Watch"))
                         
                         Spacer()
                         
@@ -365,7 +381,7 @@ struct SettingsView: View {
                                 .foregroundColor(.blue)
                                 .frame(width: 24)
                             
-                            Text("Auto-sync enabled")
+                            Text(L("Auto-sync enabled"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             
@@ -373,17 +389,25 @@ struct SettingsView: View {
                         }
                     }
                 }
+                
+                // Developer Options Section
+                Section(L("Developer Options")) {
+                    Toggle(L("Always Show Onboarding"), isOn: Binding(
+                        get: { !UserDefaults.standard.bool(forKey: "hasSeenOnboarding") },
+                        set: { UserDefaults.standard.set(!$0, forKey: "hasSeenOnboarding") }
+                    ))
+                }
             }
-            .navigationTitle("Settings")
+            .navigationTitle(L("Settings"))
             .navigationBarTitleDisplayMode(.large)
         }
-        .alert("Reset All Data", isPresented: $showingResetAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Reset", role: .destructive) {
+        .alert(L("Reset All Data"), isPresented: $showingResetAlert) {
+            Button(L("Cancel"), role: .cancel) { }
+            Button(L("Reset"), role: .destructive) {
                 waterModel.resetAllData()
             }
         } message: {
-            Text("This will permanently delete all your water usage history and reset your settings. This action cannot be undone.")
+            Text(L("This will permanently delete all your water usage history and reset your settings. This action cannot be undone."))
         }
         .sheet(isPresented: $showingAbout) {
             AboutSettingsView()
@@ -394,6 +418,10 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingLimitSheet) {
             SetLimitView()
+        }
+        .sheet(isPresented: $showingDeviceSetup) {
+            DeviceSetupView()
+                .environmentObject(waterModel)
         }
     }
     
@@ -524,7 +552,7 @@ struct AboutSettingsView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 25) {
                     VStack(spacing: 15) {
@@ -586,7 +614,7 @@ struct SensorConnectionView: View {
     @State private var connectionProgress: Double = 0.0
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 32) {
                 Spacer()
                 

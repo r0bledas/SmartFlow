@@ -5,7 +5,7 @@ struct LogView: View {
     @State private var isAutoScrolling = true
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Header with controls
                 HStack {
@@ -116,7 +116,7 @@ struct LogView: View {
                         }
                     }
                     .background(Color.black)
-                    .onChange(of: waterModel.logs.count) { _ in
+                    .onChange(of: waterModel.logs.count) { oldValue, newValue in
                         if isAutoScrolling && !waterModel.logs.isEmpty {
                             withAnimation(.easeOut(duration: 0.2)) {
                                 proxy.scrollTo(waterModel.logs.count - 1, anchor: .bottom)

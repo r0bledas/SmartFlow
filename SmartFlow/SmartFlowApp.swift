@@ -7,17 +7,23 @@
 
 import SwiftUI
 import WatchConnectivity
+import GoogleMobileAds
 
 @main
 struct SmartFlowApp: App {
     @StateObject private var waterUsageModel = WaterUsageModel()
+    @StateObject private var gamificationManager = GamificationManager()
     let connectivityManager = WatchConnectivityManager.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(waterUsageModel)
+                .environmentObject(gamificationManager)
                 .onAppear {
+                    // Initialize Google Mobile Ads SDK
+                    MobileAds.shared.start(completionHandler: nil)
+                    
                     // Initialize connectivity with Watch
                     connectivityManager.startSession()
                     

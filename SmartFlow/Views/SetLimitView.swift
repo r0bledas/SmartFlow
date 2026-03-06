@@ -17,7 +17,7 @@ struct SetLimitView: View {
     private let commonLimits: [Double] = [50, 75, 100, 125, 150, 200, 250, 300]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header Section

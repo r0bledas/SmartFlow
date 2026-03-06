@@ -7,7 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		963A06302F59E6B400075498 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 963A062F2F59E6B400075498 /* GoogleMobileAds */; };
 		96A10BC42E4EEB60005D1DC3 /* SmartFlowWatchApp Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 96A10BC32E4EEB60005D1DC3 /* SmartFlowWatchApp Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		96C8E5972EB3441600EF6901 /* 334-STEM EVIDENCE 3-TEAM 6 (1).pdf in Resources */ = {isa = PBXBuildFile; fileRef = 96C8E5962EB3441600EF6901 /* 334-STEM EVIDENCE 3-TEAM 6 (1).pdf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +72,7 @@
 		96A10BC32E4EEB60005D1DC3 /* SmartFlowWatchApp Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SmartFlowWatchApp Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		96A10BD22E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SmartFlowWatchApp Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		96A10BDC2E4EEB61005D1DC3 /* SmartFlowWatchApp Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SmartFlowWatchApp Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		96C8E5962EB3441600EF6901 /* 334-STEM EVIDENCE 3-TEAM 6 (1).pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "334-STEM EVIDENCE 3-TEAM 6 (1).pdf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -108,6 +111,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				963A06302F59E6B400075498 /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -149,6 +153,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		963A062E2F59E6B400075498 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		96A10B752E4ECDC1005D1DC3 = {
 			isa = PBXGroup;
 			children = (
@@ -156,6 +167,8 @@
 				96A10B8E2E4ECDC3005D1DC3 /* SmartFlowTests */,
 				96A10BC72E4EEB60005D1DC3 /* SmartFlowWatchApp Watch App */,
 				96A10B7F2E4ECDC1005D1DC3 /* Products */,
+				96C8E5962EB3441600EF6901 /* 334-STEM EVIDENCE 3-TEAM 6 (1).pdf */,
+				963A062E2F59E6B400075498 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -193,6 +206,7 @@
 			);
 			name = SmartFlow;
 			packageProductDependencies = (
+				963A062F2F59E6B400075498 /* GoogleMobileAds */,
 			);
 			productName = SmartFlow;
 			productReference = 96A10B7E2E4ECDC1005D1DC3 /* SmartFlow.app */;
@@ -330,7 +344,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					96A10B7D2E4ECDC1005D1DC3 = {
 						CreatedOnToolsVersion = 16.4;
@@ -368,6 +382,9 @@
 			);
 			mainGroup = 96A10B752E4ECDC1005D1DC3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				963A062B2F59E52C00075498 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 96A10B7F2E4ECDC1005D1DC3 /* Products */;
 			projectDirPath = "";
@@ -389,6 +406,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96C8E5972EB3441600EF6901 /* 334-STEM EVIDENCE 3-TEAM 6 (1).pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -569,6 +587,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -626,6 +645,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -1001,6 +1021,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		963A062B2F59E52C00075498 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		963A062F2F59E6B400075498 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 963A062B2F59E52C00075498 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 96A10B762E4ECDC1005D1DC3 /* Project object */;
 }

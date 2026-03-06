@@ -230,70 +230,195 @@ class WaterUsageModel: ObservableObject {
     // ESP32 Connection Methods
     func searchForESP32() {
         isSearchingForESP32 = true
-        addLog("Starting ESP32 search on network...")
-        
-        // First, get the device's current network information to scan intelligently
-        let currentNetworkInfo = getCurrentNetworkInfo()
-        let smartIPs = generateSmartIPList(from: currentNetworkInfo)
-        
-        addLog("Device network: \(currentNetworkInfo ?? "Unknown")")
-        addLog("Scanning \(smartIPs.count) IP addresses...")
+        addLog("🔍 Starting enhanced ESP32 search...")
         
         var foundDevice = false
-        let group = DispatchGroup()
-        
-        // Add timeout for the entire search process (reduced to 10 seconds for faster UX)
         let searchTimeout = DispatchWorkItem {
             if !foundDevice {
                 DispatchQueue.main.async {
                     self.isSearchingForESP32 = false
-                    self.addLog("ESP32 search timed out - no devices found")
+                    self.addLog("⏱️ Search timed out - no ESP32 devices found")
                     print("ESP32 search timed out - no devices found")
                 }
             }
         }
         
-        // Start timeout timer (10 seconds)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0, execute: searchTimeout)
+        // Start timeout timer (15 seconds for thorough search)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15.0, execute: searchTimeout)
         
-        // Scan IPs in parallel for faster discovery
-        let concurrentQueue = DispatchQueue(label: "ESP32Search", attributes: .concurrent)
-        
-        for ip in smartIPs {
-            group.enter()
-            concurrentQueue.async {
-                self.testESP32Connection(ip: ip) { success in
-                    if success && !foundDevice {
-                        foundDevice = true
-                        searchTimeout.cancel() // Cancel timeout since we found device
+        // STEP 1: Try last known IP first (fastest)
+        if let savedIP = getSavedESP32IP(), !savedIP.isEmpty {
+            addLog("📍 Trying last known IP: \(savedIP)")
+            testESP32Connection(ip: savedIP) { [weak self] success in
+                guard let self = self else { return }
+                if success && !foundDevice {
+                    foundDevice = true
+                    searchTimeout.cancel()
+                    DispatchQueue.main.async {
+                        self.handleSuccessfulConnection(ip: savedIP)
+                    }
+                } else if !foundDevice {
+                    // If saved IP fails, continue with full scan
+                    self.addLog("⚠️ Saved IP not responding, expanding search...")
+                    withUnsafeMutablePointer(to: &foundDevice) { ptr in
+                        self.performFullNetworkScan(foundDevice: ptr, searchTimeout: searchTimeout)
+                    }
+                }
+            }
+        } else {
+            // No saved IP, go straight to full scan
+            withUnsafeMutablePointer(to: &foundDevice) { ptr in
+                performFullNetworkScan(foundDevice: ptr, searchTimeout: searchTimeout)
+            }
+        }
+    }
+    
+    private func performFullNetworkScan(foundDevice: UnsafeMutablePointer<Bool>, searchTimeout: DispatchWorkItem) {
+        // STEP 2: Try common ESP32 hostnames (mDNS)
+        let commonHostnames = ["smartflow.local", "esp32.local", "waterflow.local"]
+        for hostname in commonHostnames {
+            if !foundDevice.pointee {
+                addLog("🌐 Trying hostname: \(hostname)")
+                testESP32Connection(ip: hostname) { [weak self] success in
+                    guard let self = self else { return }
+                    if success && !foundDevice.pointee {
+                        foundDevice.pointee = true
+                        searchTimeout.cancel()
                         DispatchQueue.main.async {
-                            self.esp32IPAddress = ip
-                            self.flowMeterConnected = true
-                            self.isSearchingForESP32 = false
-                            self.addLog("✅ ESP32 found at IP: \(ip)")
-                            self.startDataPolling()
-                            print("Found ESP32 at IP: \(ip)")
+                            self.handleSuccessfulConnection(ip: hostname)
                         }
                     }
-                    group.leave()
                 }
             }
         }
         
-        group.notify(queue: .main) {
-            if !foundDevice {
+        // STEP 3: Smart IP scanning with prioritization
+        let currentNetworkInfo = getCurrentNetworkInfo()
+        let smartIPs = generateSmartIPList(from: currentNetworkInfo)
+        
+        addLog("📡 Scanning network: \(currentNetworkInfo ?? "Unknown")")
+        addLog("🔎 Checking \(smartIPs.count) potential addresses...")
+        
+        let group = DispatchGroup()
+        let concurrentQueue = DispatchQueue(label: "ESP32Search", attributes: .concurrent)
+        let semaphore = DispatchSemaphore(value: 10) // Limit concurrent connections
+        
+        var scannedCount = 0
+        let totalCount = smartIPs.count
+        
+        for (_, ip) in smartIPs.enumerated() {
+            guard !foundDevice.pointee else { break }
+            
+            group.enter()
+            semaphore.wait()
+            
+            concurrentQueue.async { [weak self] in
+                guard let self = self else {
+                    semaphore.signal()
+                    group.leave()
+                    return
+                }
+                
+                defer {
+                    semaphore.signal()
+                    group.leave()
+                }
+                
+                self.testESP32Connection(ip: ip) { success in
+                    scannedCount += 1
+                    
+                    // Update progress every 20 scans
+                    if scannedCount % 20 == 0 {
+                        let progress = Int((Double(scannedCount) / Double(totalCount)) * 100)
+                        DispatchQueue.main.async {
+                            self.addLog("📊 Progress: \(progress)% (\(scannedCount)/\(totalCount))")
+                        }
+                    }
+                    
+                    if success && !foundDevice.pointee {
+                        foundDevice.pointee = true
+                        searchTimeout.cancel()
+                        DispatchQueue.main.async {
+                            self.handleSuccessfulConnection(ip: ip)
+                        }
+                    }
+                }
+            }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            if !foundDevice.pointee {
                 searchTimeout.cancel()
                 self.isSearchingForESP32 = false
-                self.addLog("❌ No ESP32 devices found on network")
+                self.addLog("❌ Scan complete - No ESP32 found on network")
+                self.addLog("💡 Tip: Check WiFi connection or use manual IP entry")
                 print("No ESP32 devices found on network")
             }
         }
+    }
+    
+    private func handleSuccessfulConnection(ip: String) {
+        self.esp32IPAddress = ip
+        self.flowMeterConnected = true
+        self.isSearchingForESP32 = false
+        self.saveESP32IP(ip) // Save for next time
+        self.addLog("✅ Connected to ESP32 at: \(ip)")
+        self.startDataPolling()
+        self.startAutoReconnectMonitoring()
+        print("Successfully found and connected to ESP32 at \(ip)")
+    }
+    
+    // Auto-reconnect monitoring
+    private var reconnectTimer: Timer?
+    
+    private func startAutoReconnectMonitoring() {
+        stopAutoReconnectMonitoring()
+        
+        reconnectTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // Check if still connected
+            if self.flowMeterConnected && !self.esp32IPAddress.isEmpty {
+                self.testESP32Connection(ip: self.esp32IPAddress) { success in
+                    if !success {
+                        DispatchQueue.main.async {
+                            self.addLog("⚠️ Connection lost - attempting to reconnect...")
+                            self.flowMeterConnected = false
+                            
+                            // Try to reconnect after 2 seconds
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                if !self.flowMeterConnected {
+                                    self.searchForESP32()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func stopAutoReconnectMonitoring() {
+        reconnectTimer?.invalidate()
+        reconnectTimer = nil
+    }
+    
+    // Save/Load ESP32 IP
+    private func saveESP32IP(_ ip: String) {
+        UserDefaults.standard.set(ip, forKey: "lastESP32IP")
+        addLog("💾 Saved IP address for quick reconnect")
+    }
+    
+    private func getSavedESP32IP() -> String? {
+        return UserDefaults.standard.string(forKey: "lastESP32IP")
     }
     
     func connectToESP32(ip: String) {
         esp32IPAddress = ip
         isSearchingForESP32 = true
         
+        addLog("🔌 Attempting to connect to ESP32 at IP: \(ip)")
         print("Attempting to connect to ESP32 at IP: \(ip)")
         
         testESP32Connection(ip: ip) { success in
@@ -301,15 +426,19 @@ class WaterUsageModel: ObservableObject {
                 self.isSearchingForESP32 = false
                 if success {
                     self.flowMeterConnected = true
+                    self.saveESP32IP(ip)
                     self.startDataPolling()
+                    self.startAutoReconnectMonitoring()
                     
                     let formatter = DateFormatter()
                     formatter.dateStyle = .short
                     formatter.timeStyle = .short
                     self.lastUpdateTime = formatter.string(from: Date())
                     
+                    self.addLog("✅ Successfully connected to ESP32 at \(ip)")
                     print("Successfully connected to ESP32 at \(ip)")
                 } else {
+                    self.addLog("❌ Failed to connect to ESP32 at \(ip)")
                     print("Failed to connect to ESP32 at \(ip)")
                 }
             }
@@ -322,32 +451,49 @@ class WaterUsageModel: ObservableObject {
             return
         }
         
-        // Configure request with short timeout
+        // Configure request with optimized timeout
         var request = URLRequest(url: url)
-        request.timeoutInterval = 3.0 // 3 second timeout per request
+        request.timeoutInterval = 2.0 // 2 second timeout for faster scanning
         request.httpMethod = "GET"
+        request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        
+        // Add custom headers to identify the app
+        request.setValue("SmartFlow/1.0", forHTTPHeaderField: "User-Agent")
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            if error != nil {
+            // Check for errors
+            if let error = error {
+                // Don't log every failed connection to avoid spam
+                print("Connection test failed for \(ip): \(error.localizedDescription)")
                 completion(false)
                 return
             }
             
-            if let httpResponse = response as? HTTPURLResponse,
-               httpResponse.statusCode == 200,
-               let data = data {
-                
-                // Try to parse the JSON to confirm it's our ESP32
-                do {
-                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       json["flowRate"] != nil,
-                       json["totalMilliLitres"] != nil {
+            // Validate response
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200,
+                  let data = data else {
+                completion(false)
+                return
+            }
+            
+            // Try to parse and validate JSON structure
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let flowRate = json["flowRate"],
+                   let totalMilliLitres = json["totalMilliLitres"] {
+                    
+                    // Additional validation - check if values are reasonable
+                    if let flow = flowRate as? Double,
+                       let total = totalMilliLitres as? Int,
+                       flow >= 0 && total >= 0 {
+                        print("✓ Valid ESP32 response from \(ip)")
                         completion(true)
                         return
                     }
-                } catch {
-                    // Not valid JSON or wrong format
                 }
+            } catch {
+                print("Invalid JSON from \(ip)")
             }
             
             completion(false)
@@ -361,10 +507,15 @@ class WaterUsageModel: ObservableObject {
     private func startDataPolling() {
         stopDataPolling() // Stop any existing timer
         
+        addLog("🔄 Starting data polling...")
+        
         // Poll ESP32 every 2 seconds for new data
         dataPollingTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
             self.fetchESP32Data()
         }
+        
+        // Fetch immediately
+        fetchESP32Data()
         
         // Start background monitoring when we begin polling
         startBackgroundMonitoring()
@@ -392,11 +543,11 @@ class WaterUsageModel: ObservableObject {
                 return
             }
             
-            guard let data = data else { 
+            guard let data = data else {
                 DispatchQueue.main.async {
                     self.addLog("❌ No data received from ESP32")
                 }
-                return 
+                return
             }
             
             // Log raw HTTP response
@@ -406,10 +557,12 @@ class WaterUsageModel: ObservableObject {
                 }
             }
             
-            // Log raw JSON response
-            if let rawString = String(data: data, encoding: .utf8) {
-                DispatchQueue.main.async {
-                    self.addLog("📦 Raw ESP32 data: \(rawString)")
+            // Log raw JSON response (only occasionally to avoid spam)
+            if Int.random(in: 1...30) == 1 {
+                if let rawString = String(data: data, encoding: .utf8) {
+                    DispatchQueue.main.async {
+                        self.addLog("📦 Raw ESP32 data: \(rawString)")
+                    }
                 }
             }
             
@@ -422,8 +575,10 @@ class WaterUsageModel: ObservableObject {
                         // Convert from milliliters to liters
                         let totalLitres = Double(totalMilliLitres) / 1000.0
                         
-                        // Log parsed data
-                        self.addLog("💧 Flow: \(flowRate) L/min, Total: \(totalLitres) L")
+                        // Log parsed data (occasionally)
+                        if Int.random(in: 1...30) == 1 {
+                            self.addLog("💧 Flow: \(flowRate) L/min, Total: \(totalLitres) L")
+                        }
                         
                         // Update current usage with total from ESP32
                         self.currentUsage = totalLitres
@@ -516,39 +671,56 @@ class WaterUsageModel: ObservableObject {
             if components.count == 4 {
                 let networkBase = "\(components[0]).\(components[1]).\(components[2])"
                 
-                // Scan the most common device IP ranges in the same subnet first
+                // PRIORITY 1: Most common ESP32 static IPs in same subnet
                 let priorityIPs = [
                     "\(networkBase).100", "\(networkBase).101", "\(networkBase).102",
                     "\(networkBase).103", "\(networkBase).104", "\(networkBase).105",
-                    "\(networkBase).2", "\(networkBase).3", "\(networkBase).4", "\(networkBase).5"
+                    "\(networkBase).106", "\(networkBase).107", "\(networkBase).108",
+                    "\(networkBase).109", "\(networkBase).110"
                 ]
                 smartIPs.append(contentsOf: priorityIPs)
                 
-                // Then scan broader range in the same subnet
-                for i in 10...50 {
+                // PRIORITY 2: Router neighborhood (low IPs)
+                for i in 2...20 {
+                    smartIPs.append("\(networkBase).\(i)")
+                }
+                
+                // PRIORITY 3: Common DHCP range
+                for i in 21...99 {
+                    smartIPs.append("\(networkBase).\(i)")
+                }
+                
+                // PRIORITY 4: Extended range for thorough scan
+                for i in 111...200 {
                     smartIPs.append("\(networkBase).\(i)")
                 }
             }
         }
         
-        // Fallback to common network ranges if device IP detection fails
+        // FALLBACK: Common network ranges if device IP detection fails
         let fallbackIPs = [
-            // Common router default ranges
+            // ESP32 AP mode defaults (highest priority in fallback)
+            "192.168.4.1", "192.168.4.2", "192.168.4.3",
+            
+            // Common home router ranges
             "192.168.1.100", "192.168.1.101", "192.168.1.102", "192.168.1.103",
+            "192.168.1.104", "192.168.1.2", "192.168.1.3", "192.168.1.10",
+            
             "192.168.0.100", "192.168.0.101", "192.168.0.102", "192.168.0.103",
+            "192.168.0.2", "192.168.0.3", "192.168.0.10",
             
             // iPhone/Android hotspot ranges
-            "172.20.10.2", "172.20.10.3", "172.20.10.4",
-            "10.0.0.100", "10.0.0.101", "10.0.0.102",
+            "172.20.10.2", "172.20.10.3", "172.20.10.4", "172.20.10.5",
+            "172.20.10.10", "172.20.10.11",
             
-            // Additional common ranges
-            "192.168.4.1", "192.168.4.2", "192.168.4.3", // ESP32 AP mode default
-            "10.0.1.100", "10.0.1.101", "10.0.1.102"
+            // Other common ranges
+            "10.0.0.100", "10.0.0.101", "10.0.0.102", "10.0.0.2",
+            "10.0.1.100", "10.0.1.101", "10.0.1.102", "10.0.1.2"
         ]
         
         smartIPs.append(contentsOf: fallbackIPs)
         
-        // Remove duplicates while preserving order
+        // Remove duplicates while preserving priority order
         var seen = Set<String>()
         return smartIPs.filter { seen.insert($0).inserted }
     }
@@ -556,10 +728,12 @@ class WaterUsageModel: ObservableObject {
     // Additional methods for SettingsView
     func disconnectFromESP32() {
         stopDataPolling() // Stop polling for data
+        stopAutoReconnectMonitoring() // Stop reconnect attempts
         flowMeterConnected = false
         isSearchingForESP32 = false
         esp32IPAddress = ""
         lastUpdateTime = nil
+        addLog("🔌 Disconnected from ESP32")
         print("Disconnected from ESP32")
     }
     
@@ -637,9 +811,9 @@ class WaterUsageModel: ObservableObject {
     }
     
     private func sendNotification(title: String, message: String) {
-        guard notificationsEnabled else { 
+        guard notificationsEnabled else {
             addLog("🚫 Notifications disabled - skipping notification")
-            return 
+            return
         }
         
         addLog("🔔 Attempting to send notification: \(title)")

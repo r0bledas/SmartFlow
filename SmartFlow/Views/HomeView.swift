@@ -2,22 +2,16 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var waterModel: WaterUsageModel
+    @EnvironmentObject var gamification: GamificationManager
     
     var body: some View {
         VStack {
             // Header
-            VStack(spacing: 0) {
-                Text("SmartFlow")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.blue)
-                
-                Text("beta")
-                    .font(.caption)
-                    .foregroundColor(.blue.opacity(0.7))
-                    .padding(.top, -5)
-            }
-            .padding(.top, 20)
+            Text("SmartFlow")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.blue)
+                .padding(.top, 20)
             
             // Connection status indicator
             HStack {
@@ -27,6 +21,48 @@ struct HomeView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
+            // Gamification Quick Stats
+            HStack(spacing: 16) {
+                // Streak
+                HStack(spacing: 4) {
+                    Image(systemName: "flame.fill")
+                        .foregroundColor(.orange)
+                    Text("\(gamification.streakData.currentStreak)")
+                        .fontWeight(.semibold)
+                }
+                
+                Divider()
+                    .frame(height: 20)
+                
+                // Level
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(.yellow)
+                    Text("Lv \(gamification.userLevel.level)")
+                        .fontWeight(.semibold)
+                }
+                
+                Divider()
+                    .frame(height: 20)
+                
+                // Droplets
+                HStack(spacing: 4) {
+                    Image(systemName: "drop.fill")
+                        .foregroundColor(.blue)
+                    Text("\(gamification.dropletBalance.total)")
+                        .fontWeight(.semibold)
+                }
+            }
+            .font(.subheadline)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
             .padding(.horizontal)
             .padding(.top, 8)
             
@@ -94,6 +130,11 @@ struct HomeView: View {
             
             Spacer()
             
+            // Ad Banner
+            AdBannerView()
+                .frame(height: 60)
+                .padding(.horizontal)
+            
             // Quick actions
             HStack(spacing: 20) {
                 Button(action: {
@@ -137,5 +178,9 @@ struct HomeView: View {
             .padding(.bottom, 30)
         }
         .padding()
+        .onChange(of: waterModel.currentUsage) { _, newValue in
+            // Update gamification whenever water usage changes
+            waterModel.updateGamification(gamificationManager: gamification)
+        }
     }
 }

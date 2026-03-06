@@ -5,6 +5,7 @@ struct ConnectDeviceView: View {
     @State private var manualIPAddress = ""
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var showingDeviceSetup = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -69,6 +70,35 @@ struct ConnectDeviceView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal)
+            
+            Divider()
+                .padding(.horizontal)
+            
+            // BLE Setup section
+            VStack(spacing: 15) {
+                Text("First-Time Setup")
+                    .font(.headline)
+                
+                Text("Setting up a new sensor? Use Bluetooth to configure WiFi — no computer needed.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Button(action: {
+                    showingDeviceSetup = true
+                }) {
+                    HStack {
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                        Text("Setup New Device")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
             }
             .padding(.horizontal)
             
@@ -154,22 +184,22 @@ struct ConnectDeviceView: View {
                     HStack {
                         Text("1.")
                             .fontWeight(.bold)
-                        Text("Upload the provided Arduino code to your ESP32")
+                        Text("Flash the SmartFlow firmware to your ESP32")
                     }
                     HStack {
                         Text("2.")
                             .fontWeight(.bold)
-                        Text("Update Wi-Fi credentials in the code")
+                        Text("Connect the flow sensor to GPIO pin 27")
                     }
                     HStack {
                         Text("3.")
                             .fontWeight(.bold)
-                        Text("Connect flow sensor to pin 27")
+                        Text("Power on the ESP32 (LED will blink)")
                     }
                     HStack {
                         Text("4.")
                             .fontWeight(.bold)
-                        Text("Ensure ESP32 and phone are on same network")
+                        Text("Tap \"Setup New Device\" above to configure WiFi")
                     }
                 }
                 .font(.caption)
@@ -186,6 +216,10 @@ struct ConnectDeviceView: View {
             Button("OK") { }
         } message: {
             Text(alertMessage)
+        }
+        .sheet(isPresented: $showingDeviceSetup) {
+            DeviceSetupView()
+                .environmentObject(waterModel)
         }
     }
 }

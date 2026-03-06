@@ -8,43 +8,58 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+    @AppStorage("appLanguage") private var appLanguage = Locale.current.language.languageCode?.identifier ?? "en"
     @EnvironmentObject var waterModel: WaterUsageModel
     
     var body: some View {
-        TabView {
-            NavigationView {
-                HomeView()
-            }
-            .tabItem {
-                Label("Home", systemImage: "drop.fill")
-            }
-            
-            SetLimitView()
-                .tabItem {
-                    Label("Set Limit", systemImage: "gauge.badge.plus")
+        ZStack {
+            TabView {
+                NavigationStack {
+                    HomeView()
                 }
-            
-            NavigationView {
-                HistoryView()
-            }
-            .tabItem {
-                Label("History", systemImage: "chart.line.uptrend.xyaxis")
-            }
-            
-            // Conditionally show Log tab when enabled
-            if waterModel.logViewEnabled {
-                LogView()
+                .tabItem {
+                    Label(L("Home"), systemImage: "drop.fill")
+                }
+                
+                SetLimitView()
                     .tabItem {
-                        Label("Log", systemImage: "terminal.fill")
+                        Label(L("Set Limit"), systemImage: "gauge.badge.plus")
                     }
+                
+                NavigationStack {
+                    HistoryView()
+                }
+                .tabItem {
+                    Label(L("History"), systemImage: "chart.line.uptrend.xyaxis")
+                }
+                
+                NavigationStack {
+                    AchievementsView()
+                }
+                .tabItem {
+                    Label(L("Achievements"), systemImage: "trophy.fill")
+                }
+                
+                NavigationStack {
+                    SettingsView()
+                }
+                .tabItem {
+                    Label(L("Settings"), systemImage: "gear")
+                }
             }
+            .accentColor(.blue)
             
-            SettingsView()
-            .tabItem {
-                Label("Settings", systemImage: "gear")
+            if !hasSeenOnboarding {
+                Color.black.ignoresSafeArea()
+                    .transition(.opacity)
+                
+                OnboardingView()
+                    .transition(.move(edge: .bottom))
+                    .zIndex(1)
             }
         }
-        .accentColor(.blue)
+        .environment(\.locale, .init(identifier: appLanguage))
     }
 }
 
