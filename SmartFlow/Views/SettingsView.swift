@@ -58,9 +58,8 @@ struct SettingsView: View {
                         
                         Button(action: {
                             if waterModel.flowMeterConnected {
-                                // Use the correct method to disconnect from ESP32
-                                waterModel.flowMeterConnected = false
-                                waterModel.esp32IPAddress = ""
+                                // Properly disconnect — stops timers and clears state
+                                waterModel.disconnectFromESP32()
                                 connectionFailed = false
                             } else {
                                 startConnecting()
@@ -549,7 +548,7 @@ struct SettingsView: View {
 }
 
 struct AboutSettingsView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     
     var body: some View {
         NavigationStack {
@@ -601,149 +600,15 @@ struct AboutSettingsView: View {
             .navigationTitle("About")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Done") {
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             })
         }
     }
 }
 
-struct SensorConnectionView: View {
-    @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var waterModel: WaterUsageModel
-    @State private var isConnecting = false
-    @State private var connectionProgress: Double = 0.0
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 32) {
-                Spacer()
-                
-                // Sensor Icon
-                Image(systemName: "sensor.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
-                    .padding(.top, 20)
-                
-                VStack(spacing: 16) {
-                    Text("Connect Water Flow Sensor")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Make sure your ESP32 sensor is powered on and within Bluetooth range.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                }
-                
-                VStack(spacing: 20) {
-                    if isConnecting {
-                        VStack(spacing: 16) {
-                            ProgressView(value: connectionProgress)
-                                .progressViewStyle(LinearProgressViewStyle())
-                                .frame(width: 200)
-                            
-                            Text("Connecting... \(Int(connectionProgress * 100))%")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    } else {
-                        Button(action: {
-                            connectToSensor()
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "bluetooth")
-                                Text("Connect Sensor")
-                            }
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(Color.blue)
-                            .cornerRadius(12)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.horizontal, 40)
-                    }
-                }
-                
-                VStack(spacing: 12) {
-                    Text("Connection Tips:")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("•")
-                                .foregroundColor(.blue)
-                                .fontWeight(.bold)
-                            Text("Ensure your device has Bluetooth enabled")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("•")
-                                .foregroundColor(.blue)
-                                .fontWeight(.bold)
-                            Text("Keep the sensor within 10 meters range")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        HStack(alignment: .top, spacing: 12) {
-                            Text("•")
-                                .foregroundColor(.blue)
-                                .fontWeight(.bold)
-                            Text("Check that the sensor LED is blinking")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                }
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Sensor Connection")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .disabled(isConnecting)
-                }
-            }
-        }
-    }
-    
-    private func connectToSensor() {
-        isConnecting = true
-        connectionProgress = 0.0
-        
-        // Simulate connection process with progress
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
-            connectionProgress += 0.05
-            
-            if connectionProgress >= 1.0 {
-                timer.invalidate()
-                
-                // Simulate successful connection
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    waterModel.flowMeterConnected = true
-                    isConnecting = false
-                    dismiss()
-                    
-                    // Add haptic feedback
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.impactOccurred()
-                }
-            }
-        }
-    }
-}
+// SensorConnectionView removed — was dead code that simulated a fake connection.
+// Real device setup uses DeviceSetupView with BLE provisioning.
+
 
 struct SettingsFeatureRow: View {
     let icon: String

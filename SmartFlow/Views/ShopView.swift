@@ -102,21 +102,22 @@ struct ShopItem: Identifiable {
     let icon: String
     let cost: Int
     let category: Category
+    let isImplemented: Bool
     
     enum Category {
         case powerUp, customization
     }
     
     static let powerUps: [ShopItem] = [
-        ShopItem(name: "Streak Freeze", description: "Protect your streak for one day", icon: "snowflake", cost: 50, category: .powerUp),
-        ShopItem(name: "Double XP", description: "Earn double XP for 24 hours", icon: "star.fill", cost: 75, category: .powerUp),
-        ShopItem(name: "Instant Achievement", description: "Unlock a random locked achievement", icon: "gift.fill", cost: 100, category: .powerUp),
+        ShopItem(name: "Streak Freeze", description: "Protect your streak for one day", icon: "snowflake", cost: 50, category: .powerUp, isImplemented: true),
+        ShopItem(name: "Double XP", description: "Earn double XP for 24 hours", icon: "star.fill", cost: 75, category: .powerUp, isImplemented: false),
+        ShopItem(name: "Instant Achievement", description: "Unlock a random locked achievement", icon: "gift.fill", cost: 100, category: .powerUp, isImplemented: false),
     ]
     
     static let customizations: [ShopItem] = [
-        ShopItem(name: "Rainbow Theme", description: "Colorful app theme", icon: "paintpalette.fill", cost: 150, category: .customization),
-        ShopItem(name: "Custom Badge", description: "Exclusive profile badge", icon: "shield.fill", cost: 200, category: .customization),
-        ShopItem(name: "Pro Stats", description: "Advanced analytics", icon: "chart.bar.xaxis", cost: 250, category: .customization),
+        ShopItem(name: "Rainbow Theme", description: "Colorful app theme", icon: "paintpalette.fill", cost: 150, category: .customization, isImplemented: false),
+        ShopItem(name: "Custom Badge", description: "Exclusive profile badge", icon: "shield.fill", cost: 200, category: .customization, isImplemented: false),
+        ShopItem(name: "Pro Stats", description: "Advanced analytics", icon: "chart.bar.xaxis", cost: 250, category: .customization, isImplemented: false),
     ]
 }
 
@@ -193,20 +194,34 @@ struct ShopItemCard: View {
             Spacer()
             
             Button(action: onPurchase) {
-                HStack(spacing: 4) {
-                    Text("\(item.cost)")
-                        .fontWeight(.semibold)
-                    Image(systemName: "drop.fill")
+                if item.isImplemented {
+                    HStack(spacing: 4) {
+                        Text("\(item.cost)")
+                            .fontWeight(.semibold)
+                        Image(systemName: "drop.fill")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(Color.blue)
+                    )
+                } else {
+                    Text("Coming Soon")
                         .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color(.systemGray5))
+                        )
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(Color.blue)
-                )
             }
+            .disabled(!item.isImplemented)
         }
         .padding()
         .background(

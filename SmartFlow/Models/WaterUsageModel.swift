@@ -94,6 +94,15 @@ class WaterUsageModel: ObservableObject {
         useMetricSystem = defaults.bool(forKey: "useMetricSystem")
         logViewEnabled = defaults.bool(forKey: "logViewEnabled")
         
+        // Restore limit period
+        if let periodString = defaults.string(forKey: "limitPeriod") {
+            limitPeriod = LimitPeriod(rawValue: periodString) ?? .daily
+        }
+        
+        // Restore notification threshold (default 0.8 = 80%)
+        let savedThreshold = defaults.double(forKey: "notificationThreshold")
+        notificationThreshold = savedThreshold > 0 ? savedThreshold : 0.8
+        
         if let historyData = defaults.data(forKey: "dailyHistory"),
            let history = try? JSONDecoder().decode([Double].self, from: historyData) {
             dailyHistory = history
@@ -108,6 +117,8 @@ class WaterUsageModel: ObservableObject {
         defaults.set(unit, forKey: "unit")
         defaults.set(useMetricSystem, forKey: "useMetricSystem")
         defaults.set(logViewEnabled, forKey: "logViewEnabled")
+        defaults.set(limitPeriod.rawValue, forKey: "limitPeriod")
+        defaults.set(notificationThreshold, forKey: "notificationThreshold")
         
         if let historyData = try? JSONEncoder().encode(dailyHistory) {
             defaults.set(historyData, forKey: "dailyHistory")
@@ -232,12 +243,12 @@ class WaterUsageModel: ObservableObject {
         isSearchingForESP32 = true
         addLog("🔍 Starting enhanced ESP32 search...")
         
-        var foundDevice = false
-        let searchTimeout = DispatchWorkItem {
-            if !foundDevice {
+        let searchState = SearchState()
+        let searchTimeout = DispatchWorkItem { [weak self] in
+            if !searchState.isFound {
                 DispatchQueue.main.async {
-                    self.isSearchingForESP32 = false
-                    self.addLog("⏱️ Search timed out - no ESP32 devices found")
+                    self?.isSearchingForESP32 = false
+                    self?.addLog("⏱️ Search timed out - no ESP32 devices found")
                     print("ESP32 search timed out - no devices found")
                 }
             }
@@ -251,38 +262,32 @@ class WaterUsageModel: ObservableObject {
             addLog("📍 Trying last known IP: \(savedIP)")
             testESP32Connection(ip: savedIP) { [weak self] success in
                 guard let self = self else { return }
-                if success && !foundDevice {
-                    foundDevice = true
+                if success && searchState.markFound() {
                     searchTimeout.cancel()
                     DispatchQueue.main.async {
                         self.handleSuccessfulConnection(ip: savedIP)
                     }
-                } else if !foundDevice {
+                } else if !searchState.isFound {
                     // If saved IP fails, continue with full scan
                     self.addLog("⚠️ Saved IP not responding, expanding search...")
-                    withUnsafeMutablePointer(to: &foundDevice) { ptr in
-                        self.performFullNetworkScan(foundDevice: ptr, searchTimeout: searchTimeout)
-                    }
+                    self.performFullNetworkScan(searchState: searchState, searchTimeout: searchTimeout)
                 }
             }
         } else {
             // No saved IP, go straight to full scan
-            withUnsafeMutablePointer(to: &foundDevice) { ptr in
-                performFullNetworkScan(foundDevice: ptr, searchTimeout: searchTimeout)
-            }
+            performFullNetworkScan(searchState: searchState, searchTimeout: searchTimeout)
         }
     }
     
-    private func performFullNetworkScan(foundDevice: UnsafeMutablePointer<Bool>, searchTimeout: DispatchWorkItem) {
+    private func performFullNetworkScan(searchState: SearchState, searchTimeout: DispatchWorkItem) {
         // STEP 2: Try common ESP32 hostnames (mDNS)
         let commonHostnames = ["smartflow.local", "esp32.local", "waterflow.local"]
         for hostname in commonHostnames {
-            if !foundDevice.pointee {
+            if !searchState.isFound {
                 addLog("🌐 Trying hostname: \(hostname)")
                 testESP32Connection(ip: hostname) { [weak self] success in
                     guard let self = self else { return }
-                    if success && !foundDevice.pointee {
-                        foundDevice.pointee = true
+                    if success && searchState.markFound() {
                         searchTimeout.cancel()
                         DispatchQueue.main.async {
                             self.handleSuccessfulConnection(ip: hostname)
@@ -303,11 +308,10 @@ class WaterUsageModel: ObservableObject {
         let concurrentQueue = DispatchQueue(label: "ESP32Search", attributes: .concurrent)
         let semaphore = DispatchSemaphore(value: 10) // Limit concurrent connections
         
-        var scannedCount = 0
         let totalCount = smartIPs.count
         
         for (_, ip) in smartIPs.enumerated() {
-            guard !foundDevice.pointee else { break }
+            guard !searchState.isFound else { break }
             
             group.enter()
             semaphore.wait()
@@ -325,18 +329,17 @@ class WaterUsageModel: ObservableObject {
                 }
                 
                 self.testESP32Connection(ip: ip) { success in
-                    scannedCount += 1
+                    let currentCount = searchState.incrementScanned()
                     
                     // Update progress every 20 scans
-                    if scannedCount % 20 == 0 {
-                        let progress = Int((Double(scannedCount) / Double(totalCount)) * 100)
+                    if currentCount % 20 == 0 {
+                        let progress = Int((Double(currentCount) / Double(totalCount)) * 100)
                         DispatchQueue.main.async {
-                            self.addLog("📊 Progress: \(progress)% (\(scannedCount)/\(totalCount))")
+                            self.addLog("📊 Progress: \(progress)% (\(currentCount)/\(totalCount))")
                         }
                     }
                     
-                    if success && !foundDevice.pointee {
-                        foundDevice.pointee = true
+                    if success && searchState.markFound() {
                         searchTimeout.cancel()
                         DispatchQueue.main.async {
                             self.handleSuccessfulConnection(ip: ip)
@@ -348,7 +351,7 @@ class WaterUsageModel: ObservableObject {
         
         group.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
-            if !foundDevice.pointee {
+            if !searchState.isFound {
                 searchTimeout.cancel()
                 self.isSearchingForESP32 = false
                 self.addLog("❌ Scan complete - No ESP32 found on network")
@@ -876,5 +879,37 @@ enum WaterUnit: String, CaseIterable, Identifiable {
         case .gallons:
             return "gal"
         }
+    }
+}
+
+// MARK: - Thread-safe search state for ESP32 network scanning
+/// Replaces unsafe mutable pointer pattern with a lock-protected reference type.
+/// Used by `searchForESP32()` and `performFullNetworkScan()`.
+class SearchState {
+    private let lock = NSLock()
+    private var _found = false
+    private var _scannedCount = 0
+    
+    var isFound: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return _found
+    }
+    
+    /// Attempts to mark the device as found. Returns `true` only for the first caller.
+    func markFound() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if _found { return false }
+        _found = true
+        return true
+    }
+    
+    /// Thread-safe increment. Returns the new count.
+    func incrementScanned() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        _scannedCount += 1
+        return _scannedCount
     }
 }

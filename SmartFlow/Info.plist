@@ -10,8 +10,15 @@
 	<array>
 		<string>_http._tcp.</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>SmartFlow uses this to provide personalized ads. You can opt out at any time.</string>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-2710889972191004~7903035859</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

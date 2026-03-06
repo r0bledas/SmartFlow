@@ -624,7 +624,7 @@ struct InsightCard: View {
 
 struct ExportDataView: View {
     @EnvironmentObject var waterModel: WaterUsageModel
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismiss
     @State private var showingShareSheet = false
     @State private var exportType: ExportType?
     
@@ -709,7 +709,7 @@ struct ExportDataView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Done") {
-                presentationMode.wrappedValue.dismiss()
+                dismiss()
             })
         }
     }

@@ -36,7 +36,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     
     // Helper for shared UserDefaults
     static func getSharedUserDefaults() -> UserDefaults? {
-        return UserDefaults(suiteName: "group.com.smartflow.app")
+        return UserDefaults(suiteName: "group.com.raudel.smartflow")
     }
     
     // Method to start the session (called from the app)

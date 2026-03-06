@@ -2,177 +2,148 @@
 
 > Smart Water Usage Monitoring System with ESP32 Integration
 
-SmartFlow is a comprehensive iOS water usage monitoring application that integrates with ESP32 hardware to provide real-time water flow tracking and intelligent usage management. The app features automatic ESP32 device discovery via network scanning, manual IP connection fallback, customizable daily water limits with smart notifications, historical usage analytics, and Apple Watch synchronization.
+SmartFlow is a comprehensive iOS + watchOS water usage monitoring app that pairs with an ESP32 flow sensor to provide real-time water tracking, gamified conservation goals, and intelligent notifications. The app discovers your sensor automatically via network scanning, connects through BLE for first-time WiFi provisioning, and delivers live flow data over HTTP — all without touching a single config file on the microcontroller.
 
 ## Features ✨
 
-### 🏠 Core Functionality
-- **Real-time Water Monitoring**: Live tracking of water flow rates and total usage
-- **Smart Usage Limits**: Set and monitor daily water consumption goals
-- **Historical Analytics**: Detailed charts and usage history tracking
-- **Multi-unit Support**: Switch between Liters and Gallons
-- **Apple Watch Integration**: Sync data and monitor from your wrist
+### 🏠 Real-Time Monitoring
+- Live water flow rate and total volume from ESP32 sensor
+- Customizable daily/weekly/monthly limits with progress ring
+- Multi-unit support (Liters / Gallons)
+- Smart threshold notifications (configurable %) and limit-exceeded alerts
 
 ### 🔌 ESP32 Hardware Integration
-- **Automatic Device Discovery**: Network scanning to find ESP32 sensors automatically
-- **Manual IP Connection**: Fallback option for problematic networks
-- **Real-time Data Polling**: Continuous monitoring with background task management
-- **Connection Status Monitoring**: Visual feedback and animated connection states
-- **(TO BE IMPLEMENTED):Bluetooth Support**: BLE fallback communication
+- **Auto-Discovery** — scans your local network (mDNS + IP sweep) to find the sensor
+- **BLE WiFi Provisioning** — set up freshly flashed ESP32 boards via Bluetooth, no serial monitor needed
+- **Manual IP Fallback** — direct connection when auto-discovery isn't available
+- **Live Data Polling** — continuous HTTP polling with auto-reconnect
+- **On-Device Log Console** — terminal-style view for debugging ESP32 communication
 
-### 🔔 Smart Notifications
-- **Threshold Alerts**: Customizable warnings (default 80% of daily limit)
-- **Limit Exceeded Notifications**: Alerts when daily usage is exceeded
-- **Intelligent Throttling**: Prevents notification spam with smart timing
-- **Test Notifications**: 3-second countdown test feature for verification
+### 🏆 Gamification
+- **Achievements** — 10+ unlockable milestones across multiple categories
+- **Streaks** — daily conservation streak tracking with freeze power-ups
+- **Levels & XP** — earn experience for water-saving behavior
+- **Droplet Currency** — collect and spend on in-app rewards
+- **Daily Challenges** — fresh conservation goals each day
+- **Shop** — spend droplets on power-ups and customizations
 
-### ⚙️ Advanced Settings
-- **Developer Mode**: Logging view for ESP32 communication debugging
-- **Data Export**: Export usage data for analysis
-- **Connection Management**: Sophisticated network discovery and manual configuration
-- **Notification Customization**: Adjustable alert thresholds and preferences
+### ⌚ Apple Watch
+- Companion watch app with usage ring, 7-day history chart, and quick actions
+- WatchConnectivity sync (live messages + application context fallback)
+- Set limits and reset usage directly from your wrist
 
-## Screenshots 📱
+### 🌍 Localization
+- Full English and Spanish support
+- Language selection during onboarding
+- Centralized `LocalizationManager` for easy extension
 
-| Home Screen | Settings | History |
-|-------------|----------|---------|
-| Real-time usage monitoring | Device connection & preferences | Usage analytics & trends |
+### 🔔 Notifications
+- Threshold alerts (default 80%) and limit-exceeded warnings
+- Intelligent throttling to prevent notification spam
+- Test notification feature with countdown
+
+### 💰 Monetization
+- Google AdMob banner integration (adaptive banner, ATT-compliant)
+- Privacy manifest included (`PrivacyInfo.xcprivacy`)
 
 ## Requirements 📋
 
 ### iOS App
-- iOS 14.0+
-- Xcode 13.0+
-- Swift 5.5+
-- iPhone/iPad compatible
-- Apple Watch (optional)
+- iOS 16.0+
+- Xcode 16.0+
+- Swift 5.9+
+- Google Mobile Ads SDK 13.1+ (via SPM)
 
 ### Hardware
 - ESP32 Development Board
-- Water Flow Sensor (compatible with ESP32)
-- WiFi Network
-- Power Supply for ESP32
+- YF-S201 Water Flow Sensor (or compatible hall-effect sensor)
+- WiFi network (2.4 GHz)
+- 5V power supply
 
 ## Installation 🚀
 
-### 1. Clone the Repository
+### 1. Clone
 ```bash
 git clone https://github.com/r0bledas/SmartFlow.git
 cd SmartFlow
 ```
 
-### 2. Open in Xcode
+### 2. Open & Build
 ```bash
 open SmartFlow.xcodeproj
 ```
+- Select your development team in Signing & Capabilities
+- The Google Mobile Ads SDK is pulled automatically via Swift Package Manager
+- Build and run on a real device (⌘+R)
 
-### 3. Configure Signing & Capabilities
-- Select your development team
-- Update bundle identifier if needed
-- Enable necessary capabilities (Background Processing, Push Notifications)
+### 3. ESP32 Setup
+1. Flash `SmartFlow/ESP32WaterFlowINOfile/ESP32WaterFlow/ESP32WaterFlow.ino` to your ESP32
+2. Connect the flow sensor signal wire to **GPIO 27**
+3. Power on — the LED will blink, indicating provisioning mode
+4. Open SmartFlow → Settings → **Setup New Device**
+5. The app finds the ESP32 via BLE, sends your WiFi credentials, and connects automatically
 
-### 4. Build and Run
-- Select your target device
-- Build and run the project (⌘+R)
+## Project Structure 📁
 
-## Hardware Setup 🔧
-
-### ESP32 Configuration
-1. Flash the included Arduino sketch: `~/SmartFlow/SmartFlow/ESP32WaterFlowINOfile/ESP32WaterFlow.ino`
-2. Connect your water flow sensor to the designated GPIO pins
-3. Configure WiFi credentials in the Arduino code
-4. Power on the ESP32 and verify LED indicators
-
-### Network Setup
-- Ensure ESP32 and iOS device are on the same WiFi network
-- Note the ESP32's IP address for manual connection if needed
-- Configure any necessary firewall rules for communication
-
-## Usage 📖
-
-### Getting Started
-1. **Launch the App**: SmartFlow will automatically search for ESP32 devices
-2. **Connect Device**: Use automatic discovery or manual IP entry
-3. **Set Limits**: Configure your daily water usage goals
-4. **Monitor Usage**: View real-time data on the Home screen
-
-### Key Features
-
-#### Home Screen
-- Current usage display with progress indicators
-- Real-time flow rate monitoring
-- Quick access to limit adjustments
-- Connection status indicators
-
-#### Settings
-- **Flow Sensor**: Connect/disconnect ESP32 devices
-- **Device Information**: View connection details and statistics  
-- **Daily Limits**: Set and modify usage goals
-- **Notifications**: Configure alert thresholds and test notifications
-- **Apple Watch**: Enable synchronization
-
-#### History
-- Daily, weekly, and monthly usage trends
-- Historical data visualization
-- Usage pattern analysis
-
-### Troubleshooting Connection Issues
-1. **Automatic Discovery Failed**: 
-   - Try manual IP connection
-   - Verify both devices are on same network
-   - Check ESP32 power and WiFi connection
-
-2. **Data Not Updating**:
-   - Check ESP32 sensor connections
-   - Verify water flow sensor functionality
-   - Enable developer logs for debugging
-
-## API & Integration 🔗
-
-### URL Scheme Support
-SmartFlow supports URL schemes for external integration:
-```
-smartflow://reset        # Reset water usage counter
-smartflow://connect      # Trigger ESP32 connection
-smartflow://settings     # Open settings screen
-```
-
-### Apple Watch Integration
-- Automatic data synchronization
-- Independent watch interface
-- Real-time usage monitoring from wrist
-
-## Development 💻
-
-### Project Structure
 ```
 SmartFlow/
-├── SmartFlow/              # Main iOS app
-│   ├── Views/              # SwiftUI views
-│   ├── Models/             # Data models and ESP32 integration
-│   ├── Connectivity/       # Watch and network communication
-│   └── Utilities/          # Helper functions and extensions
-├── SmartFlow Watch App/    # Apple Watch companion
-├── ESP32_SmartFlow_BLE.ino # Arduino code for ESP32
-└── README.md              # This file
+├── SmartFlow/                          # iOS app target
+│   ├── SmartFlowApp.swift              # App entry point, SDK init, ATT prompt
+│   ├── ContentView.swift               # Tab navigation + onboarding
+│   ├── Views/
+│   │   ├── HomeView.swift              # Dashboard with progress ring + ad banner
+│   │   ├── SetLimitView.swift          # Limit presets, slider, period selector
+│   │   ├── HistoryView.swift           # Charts, stats, data export
+│   │   ├── AchievementsView.swift      # Gamification UI + celebration overlay
+│   │   ├── SettingsView.swift          # Connection, preferences, developer tools
+│   │   ├── DeviceSetupView.swift       # BLE provisioning wizard (4-step flow)
+│   │   ├── ConnectDeviceView.swift     # Manual IP / auto-discovery connection
+│   │   ├── ShopView.swift              # Droplet currency shop
+│   │   ├── LogView.swift               # ESP32 debug console
+│   │   ├── OnboardingView.swift        # Language selection + first-run setup
+│   │   └── AdBannerView.swift          # Google AdMob adaptive banner
+│   ├── Models/
+│   │   ├── WaterUsageModel.swift       # Core model: usage, limits, ESP32 HTTP
+│   │   ├── WaterUsageModel+ESP32.swift # BLE data integration extension
+│   │   ├── WaterUsageModel+Gamification.swift
+│   │   ├── GamificationModel.swift     # Achievements, streaks, levels, challenges
+│   │   ├── BluetoothManager.swift      # CoreBluetooth scanning + data transfer
+│   │   └── WiFiProvisioningManager.swift # BLE-based WiFi setup for ESP32
+│   ├── Connectivity/
+│   │   └── WatchConnectivityManager.swift
+│   ├── Utils/
+│   │   ├── LocalizationManager.swift   # L() helper + EN/ES string tables
+│   │   └── HapticFeedback.swift        # Taptic engine wrappers
+│   ├── Info.plist                      # BLE, network, ATT, AdMob config
+│   └── PrivacyInfo.xcprivacy          # Apple privacy manifest
+├── SmartFlowWatchApp Watch App/        # watchOS target
+│   ├── ContentView.swift               # Usage ring, history, quick actions
+│   └── SmartFlowWatchInterface.swift   # WatchWaterUsageModel + WCSession
+├── Shared/
+│   └── WatchConnectivityManager.swift  # Shared connectivity helpers
+└── ESP32WaterFlowINOfile/
+    └── ESP32WaterFlow.ino              # Arduino firmware (BLE + HTTP + flow)
 ```
 
-### Key Components
-- **WaterUsageModel**: Core data management and ESP32 communication
-- **SettingsView**: Device connection and configuration interface
-- **HomeView**: Main dashboard and usage display
-- **BluetoothManager**: BLE communication fallback
-- **WatchConnectivityManager**: Apple Watch synchronization
+## Architecture 🏗️
 
-### Building from Source
-1. Ensure all dependencies are available
-2. Configure signing certificates
-3. Update hardware configuration as needed
-4. Build for your target devices
+| Layer | Technology |
+|-------|-----------|
+| UI | SwiftUI |
+| State | `@EnvironmentObject` + `ObservableObject` |
+| Persistence | `UserDefaults` (JSON-encoded history) |
+| ESP32 Comms | HTTP polling (`URLSession`) + BLE provisioning (`CoreBluetooth`) |
+| Watch Sync | `WatchConnectivity` (messages + app context + shared `UserDefaults`) |
+| Ads | Google Mobile Ads SDK 13.1 (SPM) |
+| Firmware | Arduino (ESP32), `WebServer.h`, `BLEDevice.h`, `ArduinoJson.h` |
+
+## URL Scheme 🔗
+
+```
+smartflow://reset       # Reset water usage counter
+```
 
 ## Contributing 🤝
-
-We welcome contributions! Please follow these steps:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -180,47 +151,21 @@ We welcome contributions! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Areas for Contribution
-- Additional sensor support
-- Enhanced analytics features
-- UI/UX improvements
-- Documentation updates
-- Bug fixes and optimizations
+## Roadmap 🗺️
+
+- [ ] Cloud data backup and sync
+- [ ] Multi-sensor support
+- [ ] Leak detection algorithms
+- [ ] HomeKit / Home Assistant integration
+- [ ] Water quality monitoring
+- [ ] Widget extensions
 
 ## License 📄
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support 💬
-
-- **Issues**: Report bugs and request features via GitHub Issues
-- **Documentation**: Check the wiki for detailed guides
-- **Community**: Join discussions in GitHub Discussions
-
-## Roadmap 🗺️
-
-### Upcoming Features
-- [ ] Cloud data backup and sync
-- [ ] Multi-device support
-- [ ] Advanced analytics and insights
-- [ ] Integration with smart home systems
-- [ ] Water quality monitoring
-- [ ] Leak detection algorithms
-
-### Version History
-- **v1.0.0** (September 2025): Initial release with ESP32 integration
-- **v0.9.0**: Beta release with Apple Watch support
-- **v0.8.0**: Alpha release with basic monitoring
-
-## Acknowledgments 🙏
-
-- ESP32 community for hardware support and documentation
-- Apple for SwiftUI and WatchOS frameworks
-- Open source community for inspiration and libraries
-- Water conservation organizations for raising awareness
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
 **Built with ❤️ for water conservation**
 
-*SmartFlow - Making every drop count*
+*SmartFlow — Making every drop count*

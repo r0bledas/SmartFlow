@@ -8,6 +8,7 @@
 import SwiftUI
 import WatchConnectivity
 import GoogleMobileAds
+import AppTrackingTransparency
 
 @main
 struct SmartFlowApp: App {
@@ -21,8 +22,16 @@ struct SmartFlowApp: App {
                 .environmentObject(waterUsageModel)
                 .environmentObject(gamificationManager)
                 .onAppear {
-                    // Initialize Google Mobile Ads SDK
-                    MobileAds.shared.start(completionHandler: nil)
+                    // Initialize Google Mobile Ads SDK immediately
+                    MobileAds.shared.start()
+                    
+                    // Request ATT authorization after a short delay (best practice)
+                    // The SDK automatically respects the user's tracking choice
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        ATTrackingManager.requestTrackingAuthorization { status in
+                            print("ATT status: \(status.rawValue)")
+                        }
+                    }
                     
                     // Initialize connectivity with Watch
                     connectivityManager.startSession()
